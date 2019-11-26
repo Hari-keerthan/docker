@@ -1,0 +1,7 @@
+docker network create --driver bridge test_net
+
+docker container run --name try --network testnet -dt centos:latest
+
+docker container run --name try2 --network testnet -dt centos:latest
+
+now we can ping one container from another becoz both are in same network
