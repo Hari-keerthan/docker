@@ -1,0 +1,23 @@
+docker-compose
+-----------------------------------------------------------------------
+version: "3.0"
+
+
+services:
+  hosti-service:
+    build: ./hosti
+    volumes:
+      - ./hosti:/var/www/html/
+    ports:
+      - 5000:80
+-----------------------------------------------------------------------------
+Dockerfile
+-----------------------------------------------------------------------------	  
+FROM centos:latest
+RUN yum -y install httpd 
+CMD ["/usr/sbin/httpd","-D","FOREGROUND"] →
+EXPOSE 80
+
+-----------------------------------------------------------
+
+$ docker stack deploy -c docker-compose.yml test
