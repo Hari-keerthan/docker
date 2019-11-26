@@ -1,0 +1,18 @@
+The source script is :
+FROM centos:latest
+RUN yum -y install httpd 
+COPY index.html /var/www/html 
+CMD ["/usr/sbin/httpd","-D","FOREGROUND"]
+EXPOSE 80 
+--------------------------------------------------------------
+save this html as index.html
+
+
+● Our html file is
+<! DOCTYPE html>
+<html>
+<body>
+<h1>HELLO WORLD!!</h1>
+<strike>This is this way.. :(</strike>
+</body>
+</html>
