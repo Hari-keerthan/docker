@@ -1,0 +1,216 @@
+-> see current running docker containers - docker ps -a
+-> see current docker images - docker images
+-> to build docker image - docker build -t test:1.0 .
+-> to run docker file - docker run -p 5454:80 -d dockerFilename:version 
+-> to stop a container -  docker stop container id
+-> intaeractive docker container - docker container run it imagename:vesion bash
+-> to start a stopped container - docker container start containerid
+-> after starting to interact with stopped container  - docker container exec containerid <command or bash> or docker container exec <container name> -it bash
+-> to see container logs - docker container logs containerid
+-> to see operations running in background in foreground - docker container attach <containerid>
+-> to see whats changed in the container  - docker container diff <containerid>
+-> onemore way to build a docker image - cat Dockerfile | docker image build -t myimage -f - .
+
+-> in dockerfile add this line at the end { ENTRYPOINT["<command>"] } now give arguments when user run command
+example: docker container run <imagename> <argumnets to the command in the entrypoint>
+we can also give 2 args to entry point ex : ENTRYPOINT ["ping", "-c", "3"] and give the ip when used run command
+
+-> If CMD and ENTRYPOINT are both specified in a Dockerfile, tokens listed in CMD are used as default parameters
+for the ENTRYPOINT command.
+
+-> How to push image to docker repo?
+first make a account in https://hub.docker.com and ur username is dockerid
+
+first do -> docker login
+
+all images you want to share on Docker Hub must be named like <Docker ID>/<repo name>[:<optional tag>].
+
+[centos@node-0 ~]$ docker image tag my-centos:dev <Docker ID>/my-centos:dev  --- (optional)
+[centos@node-0 ~]$ docker image push <Docker ID>/my-centos:dev
+
+-> to tun from ur dockerhub -> [centos@node-0 ~]$ docker image build -t <Docker ID>/my-centos:1.0 .
+
+
+-> to pull postgres - docker image pull postgres:9-alpine
+-> to create a running container of postgres - docker container run --name <container_name> -v db_backing:(path_of_the_postgrest_mounted) -d postgres:9-alpine
+path_of_the_postgrest_mounted - this can be known using docker image inspect postgres:9-alpine in this look for volume and get the path in the volume
+
+-> now we can interact with the postgres using docker container exec -it <container_name> psql -U postgres
+then create a table , instert rows and do select query
+
+
+-> to inspect netowrk - docker netowrk ls ------ u will see bridge host and none
+
+-> docker network inspect bridge
+
+-> Use brctl to see connections to the docker0 bridge:
+[centos@node-1 ~]$ brctl show docker0
+bridge name bridge id STP enabled interfaces
+docker0 8000.02427f12c30b no
+
+
+docker network ls lists all networks on the host
+• docker network inspect <network name> gives more detailed info about the named network
+• docker network create --driver <driver> <network name> creates a new network using the specified
+driver; so far, we’ve only seen the bridge driver, for creating a linux bridge based network.
+• docker network connect <network name> <container name or id> connects the specified container to
+the specified network after the container is running; the --network flag in docker container run achieves
+the same result at container launch.
+• docker container inspect <container name or id> yields, among other things, information about the
+networks the specified container is connected to.
+
+
+-> to create a docker swarm - docker swarm init --advertise-addr <ip addrest of manager node>
+-> to add a worker in swarm - run the command which u get when u use the above command or (docker swarm join --token <token which u get when used above command> manager ip )
+-> to get the command to join a worker to swarm - use this command on manager node  ( docker swarm join-token manager )
+-> to get the info of docker swarm - run this on any swarm node - docker info or dockr system info
+-> to know the state of docker swarm - run this command on manager - docker node ls
+-> to get the complete info of a docker node use - docker node inspect NodeName
+
+
+
+How to start a service in docker swarm
+-> first create a swarm using the above steps
+-> in the manager node create a network using [ docker network create --driver overlay <network name> ]
+-> then create the service in manager using [ docker service create --name pinger --network <network name> alpine ping 8.8.8.8 ]
+-> To see the running services use - docker service ls
+-> to see on which node the service is running docker service ps <service name>
+-> to run the service on multiple nodes [ docker service update <service name > --replicas=3 ]
+-> now Run [ docker network inspect <network name> ] on any node that has a pinger task scheduled on it and you will see the task scheduled 
+
+"Peers": [
+{
+"Name": "967da1a0349f",
+"IP": "10.10.12.136"
+},
+{
+"Name": "d1cd9f4a25bb",
+"IP": "10.10.35.36"
+},
+{
+"Name": "d7e00d4376ca",
+"IP": "10.10.57.19"
+}
+]
+
+-> to inspect the docker logs [ docker service logs <service name> ]
+this will show logs of service on all nodes
+-> if u want the logs of service on one node
+Run [ docker service ps <service name> ] and get the task id of the process running on the node you want
+now run [ docker service logs < Task ID >
+
+
+-> to warch the output of a docker service - watch docker service ps <process name or ID >
+
+-> if a node fails and rejoins a swarm it will not get its old workload back; if we want to redistribute workload
+across a swarm after new nodes join (or old nodes rejoin), we need to force-rebalance our tasks - [ docker service update --force < service name > 
+
+-> On your manager node, remove all existing services - [ docker service rm $(docker service ls -q) ]
+
+-> to start a service in backgroung use - --detach flag when using docker service create
+-> use --replicas=<no. of replicas> with docker service create to create replicas
+-> to specify the replicas aftr starting a service use - docker service update <service name> --replicas=3
+-> to mention the number of cores usage used by a service use flag --vm <no. of cores> . The one container on this host is consuming <no. of cores>
+CPUs  anything else scheduled on this node is going to be starved of resources.
+-> to mention the memory usage use flag --vm-bytes <memory in mb M> . The one container on this host is consuming <memory in mb>
+memory  anything else scheduled on this node is going to be starved of resources.
+-> to limit the cpu usage for a service use flag - --limit-cpu < no. of cores >
+-> to limit the memory usage for a service use flag  - --limit-memory <memory in mb M>
+
+
+-> to label a node use command - docker node update --label-add datacenter=east nodename
+
+-> docker compose is used for making container in one node and docker stack is sued for making a service in docker swarm .
+
+-> docker stack
+	-> we’ve run individual services with docker service create. As we build more complex applications consisting
+		of multiple components, we’d like a way to capture them all in a single file we can version control and recreate; for
+		this, we can use stack files.
+	-> firest creaate a .yml file
+		syntax of yml file is same as docker compose - see the docs at https://dockr.ly/2iHUpeX.
+			example mystack.yml file
+---------------------------------------------------------------------------------------------------------
+				version: "3.7"
+				services:
+					db:
+						image: postgres:9.6
+						env_file:
+						- myvars.env
+---------------------------------------------------------------------------------------------------------
+	-> create .env file to define environmental variables for the for the container
+	-> now to get the container id - use docker container ls - and copy container id
+	-> use docker container exec -it <container id> psql -U <username defined in .env file > -d < database name defined in .env file>
+	-> to see the list of stacks - docker stack ls
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+firt make an image using from centos;latest and then modify dockerfile to AS and use as then size will be decreased y?
+for this runa c program'
+
+what is export DOCKER_BUILDKIT=0( what is docker buildkit)
+
+if we create a local volume for docker where is it created
+
+how to know on whoch network docker service runnig
+
+
+
+
+
+
+------------------------------------------------------------------------------------------------------
+
+
+FROM centos:latest → pulling centos image.
+RUN yum -y install httpd →  install httpd package
+COPY index.html /var/www/html →  Copy our html file to this directory.
+CMD ["/usr/sbin/httpd","-D","FOREGROUND"] → Run this command to start http in foreground.
+EXPOSE 80 → Expose this port to the outer layer of container network.
+
+---------------------------------------------------------------------------------------------------------
+
+SIMPLE TEST SERVER SERVICE
+
+- first create a swarm - docker swarm init --advertise-addr $(hostname -i)
+-add the workers and mangers
+-docker container run -it centos bash
+	- yum install httpd
+	- mkdir /var/www/html/test
+	-exit
+-docker stop $(docker container ps -aq)
+-docker ps -aq - copy the container id
+-docker commit [ENTER THE COPIED CONTAINER ID] serv
+-docker volume create test_vol
+-docker service create --mount 'type=volume,sev=test_vol,dst=/var/www/html/test' -p 5000:80 --name test_swarm serv /usr/sbin/httpd -D FOREGROUND
+-to copy data to volume - docker cp [file u want to copy] containerID:/var/www/html/test 
+-docker swarm update test-swarm --replicas=4
+---------------------------------------------------------------------------------------------------------
+
+
+
+
+bind-utils - nslookup package
+
+docker run -dit --name my-apache-app -p 8080:80 -v "$PWD":/usr/local/apache2/htdocs/ httpd:latest
+
+
+docker run -p 80:80 --name=mysql1 -d mysql/mysql-server:tag  =ORjUGK@mHyDam3dEM.AHb3S$yv
+
+
+
+
+
+
