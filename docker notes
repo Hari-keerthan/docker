@@ -1,6 +1,6 @@
 -> see current running docker containers - docker ps -a
 -> see current docker images - docker images
--> to build docker image - docker build -t test:1.0 .
+-> to build docker image - docker build -t test:1.0 . or use docker commit <container-id>
 -> to run docker file - docker run -p 5454:80 -d dockerFilename:version 
 -> to stop a container -  docker stop container id
 -> intaeractive docker container - docker container run it imagename:vesion bash
