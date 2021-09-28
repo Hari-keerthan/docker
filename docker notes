@@ -209,6 +209,10 @@ docker run -dit --name my-apache-app -p 8080:80 -v "$PWD":/usr/local/apache2/htd
 
 docker run -p 80:80 --name=mysql1 -d mysql/mysql-server:tag  =ORjUGK@mHyDam3dEM.AHb3S$yv
 
+command  to remove all images and volumes -> docker system  prune
+command to remove just all volumes -> docker system prune -a -f --volumes
+command to login to ecr -> aws ecr get-login --region us-east-2
+
 
 
 
